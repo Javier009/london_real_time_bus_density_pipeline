@@ -58,7 +58,7 @@ def fetch_naptan_ids(Request):
 
     if naptan_to_capture:
 
-        for naptan_id in naptan_to_capture[0:200]: # Will process some at a time not all, eventutally data will be smaller
+        for naptan_id in naptan_to_capture[0:300]: # Will process some at a time not all, eventutally data will be smaller
 
             # API CALL FOR COORDINATES MAPPING
             station_map_url = f'https://api.tfl.gov.uk/StopPoint/{naptan_id}'
