@@ -100,14 +100,14 @@ def fetch_naptan_ids(Request):
 
         print(f'Stored {len(batch_result)-1} in GCS and now sending a message to pubsub to trigger process again')
 
-        time.sleep(20)
+        time.sleep(60)
         # Send message tu pub/sub    
         future = publisher.publish(topic_path, message_bytes)
         print(f"✅ Message published. Message ID: {future.result()}")
         return f'✅  Naptan Ids captured and sent to BigQuery', 200 
     else:
         print('No new Naptan Ids to capture')
-        time.sleep(20)
+        time.sleep(60)
         future = publisher.publish(topic_path, message_bytes)
         print(f"✅ Message published. Message ID: {future.result()}")
         return f'✅  No new Naptan Ids found', 200 
