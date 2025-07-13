@@ -1,0 +1,20 @@
+{
+  "name": "PubsubToLogPipeline",
+  "description": "Reads messages from a Google Cloud Pub/Sub subscription and logs them. Designed for use as a Dataflow Flex Template.",
+  "parameters": [
+    {
+      "name": "project_id",
+      "label": "Google Cloud Project ID",
+      "helpText": "The ID of your Google Cloud Project where the Pub/Sub subscription is located. (e.g., 'your-gcp-project-id')",
+      "isOptional": false,
+      "regex": "^[a-z0-9-]+$"
+    },
+    {
+      "name": "subscription_name",
+      "label": "Pub/Sub Subscription Name",
+      "helpText": "The name of the Pub/Sub subscription to read messages from (e.g., 'my-beam-subscription').",
+      "isOptional": false,
+      "regex": "^[a-zA-Z0-9_-]+$"
+    }
+  ]
+}
