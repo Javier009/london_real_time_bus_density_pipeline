@@ -152,7 +152,12 @@ def main():
         print('No Null naptanIds found')
         final_arrivals_pred_df_enriched  =  arrivals_pred_df_enriched
 
-    # Send the most recent data to GCS Temporary file --> IWill copy into official file after extraction and enrichment is complete
+    # Finally add pull time w/London time zone
+    london_timezone = pytz.timezone('Europe/London')
+    london_current_time = datetime.now(london_timezone)
+    final_arrivals_pred_df_enriched['pull_time'] = london_current_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    # Send the most recent data to GCS Temporary file --> Will copy into official file after extraction and enrichment is complete
     csv_buffer = StringIO()
     final_arrivals_pred_df_enriched.to_csv(csv_buffer, index=False)
     blob.upload_from_string(csv_buffer.getvalue(), content_type="text/csv")
