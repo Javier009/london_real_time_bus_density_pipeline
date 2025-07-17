@@ -66,69 +66,90 @@ def main():
     not_found_naptan_df = arrivals_pred_df_enriched[arrivals_pred_df_enriched['clusterAgglomerative'].isnull()]
     not_found_naptan_df = not_found_naptan_df[not_found_naptan_df['naptanId'] != 'null'][['vehicleId', 'naptanId', 'lineId', 'timestamp', 'timeToStation']]
 
-    if len(not_found_naptan_df) > 0:
+    if len(not_found_naptan_df) > 0: # ---> If there are not found naptanIds
+        print('There are some new Naptan Ids with no clusters')
+
         # Remove them from the enrieched data frame -> They will be appended later
         arrivals_pred_df_enriched = arrivals_pred_df_enriched[~arrivals_pred_df_enriched['naptanId'].isin([n for n in not_found_naptan_df['naptanId']])]
 
         # Read raw coordinates table to estimate cluster based on haversine_distances
-                
+
+        # not_found_naptan_list = list(not_found_naptan_df['naptanId'])
+        
         stations_raw_table = 'stopspoint_coordinates'
+        not_found_naptan_df_list = [n for n in not_found_naptan_df['naptanId']]
 
-        raw_stations_coorsinates_query = f"""
-            SELECT *
-            FROM `{PROJECT_ID}.{DATA_SET}.{stations_raw_table}`
-            WHERE naptanId IN {tuple([n for n in not_found_naptan_df['naptanId']])}
-        """
+        if len(not_found_naptan_df_list) > 1:
+            raw_stations_coorsinates_query = f"""
+                SELECT *
+                FROM `{PROJECT_ID}.{DATA_SET}.{stations_raw_table}`        
+                WHERE naptanId IN {tuple(not_found_naptan_df_list)}
+            """
+        else:
+            raw_stations_coorsinates_query = f"""
+                SELECT *
+                FROM `{PROJECT_ID}.{DATA_SET}.{stations_raw_table}`        
+                WHERE naptanId IN ({not_found_naptan_df_list[0]})
+            """
+
         raw_stations_coorinates_result =  BQ_client.query(raw_stations_coorsinates_query)
-
-        raw_stations_coorinates_df = pd.DataFrame([{'naptanId': row[0],
-                                                    'commonName': row[1],
-                                                    'latitude': row[2],
+        
+        raw_stations_coorinates_df = pd.DataFrame([{'naptanId': row[0], 
+                                                    'commonName': row[1], 
+                                                    'latitude': row[2], 
                                                     'longitude': row[3]} 
                                                     for row in raw_stations_coorinates_result])
-
-        # Apply haversine_distances to each not found coordinate
-
-        clustered_coords = np.radians(clusterized_stations_df[['latitude', 'longitude']].values)
-        cluster_labels = clusterized_stations_df['clusterAgglomerative'].values
-
-        proximity_clusters = [] 
-
-        for i in range(0,len(raw_stations_coorinates_df)):
         
-            latitude = raw_stations_coorinates_df.iloc[i]['latitude']
-            longitude = raw_stations_coorinates_df.iloc[i]['longitude']
+        if len(raw_stations_coorinates_df) > 0: # --> If Not found NaptanIds are in Coordinates raw table 
+            print('Found those NaptanIds as they are already part of raw coordinates')
 
-            # New point (also in radians)
+            # Apply haversine_distances to each not found coordinate
 
-            new_point = np.radians([[latitude,longitude]])
+            clustered_coords = np.radians(clusterized_stations_df[['latitude', 'longitude']].values)
+            cluster_labels = clusterized_stations_df['clusterAgglomerative'].values
 
-            # Compute distances to all points
-            distances = haversine_distances(clustered_coords, new_point) * 6371.0088  # km
+            proximity_clusters = [] 
 
-            # Find the closest point and append to list of proximity clusters
-            closest_index = np.argmin(distances)
-            closest_cluster = cluster_labels[closest_index]
+            for i in range(0,len(raw_stations_coorinates_df)):
+            
+                latitude = raw_stations_coorinates_df.iloc[i]['latitude']
+                longitude = raw_stations_coorinates_df.iloc[i]['longitude']
 
-            proximity_clusters.append(closest_cluster)
+                # New point (also in radians)
 
-        raw_stations_coorinates_df['clusterAgglomerative'] = proximity_clusters
+                new_point = np.radians([[latitude,longitude]])
 
-        # Now merge with not found naptan Ids:
-        not_found_naptan_df_enriched = not_found_naptan_df.merge(raw_stations_coorinates_df[['naptanId', 'latitude'	, 'longitude', 'clusterAgglomerative']], how='left', on='naptanId')
+                # Compute distances to all points
+                distances = haversine_distances(clustered_coords, new_point) * 6371.0088  # km
 
-        # Append the naptans with enriched data to the original data frame
-        final_arrivals_pred_df_enriched = pd.concat([arrivals_pred_df_enriched, not_found_naptan_df_enriched], axis=0, ignore_index=True)
+                # Find the closest point and append to list of proximity clusters
+                closest_index = np.argmin(distances)
+                closest_cluster = cluster_labels[closest_index]
 
-        #Drop null values in the final enriched in the data frame --> If not found after harvesine proximity that means they are not in the raw coordinates table 
+                proximity_clusters.append(closest_cluster)
 
-        final_arrivals_pred_df_enriched = final_arrivals_pred_df_enriched.dropna(subset='clusterAgglomerative')[['vehicleId', 'naptanId', 'timeToStation', 'latitude', 'longitude', 'clusterAgglomerative']]
-        # Finally add pull time
-        london_timezone = pytz.timezone('Europe/London')
-        london_current_time = datetime.now(london_timezone)
-        final_arrivals_pred_df_enriched['pull_time'] = london_current_time.strftime('%Y-%m-%d %H:%M:%S')
+                # print(f"Closest cluster: {closest_cluster}")
+
+            raw_stations_coorinates_df['clusterAgglomerative'] = proximity_clusters
+
+            # Now merge with not found naptan Ids:
+            not_found_naptan_df_enriched = not_found_naptan_df.merge(raw_stations_coorinates_df[['naptanId', 'latitude'	, 'longitude', 'clusterAgglomerative']], how='left', on='naptanId')
+
+            # Append the naptans with enriched data to the original data frame
+            final_arrivals_pred_df_enriched = pd.concat([arrivals_pred_df_enriched, not_found_naptan_df_enriched], axis=0, ignore_index=True)
+
+            # Finally, Drop null values in the final enriched in the data frame --> If not found after harvesine proximity that means they are not in the raw coordinates table 
+
+            final_arrivals_pred_df_enriched = final_arrivals_pred_df_enriched.dropna(subset='clusterAgglomerative')
+            final_arrivals_pred_df_enriched = final_arrivals_pred_df_enriched [['vehicleId', 'naptanId', 'timeToStation', 'latitude', 'longitude', 'clusterAgglomerative']]
+        
+        else:
+            print('The new naptanIds are not in raw Coordinats table so they wont be considered')
+            final_arrivals_pred_df_enriched = arrivals_pred_df_enriched.dropna(subset='clusterAgglomerative')
+
 
     else:
+        print('No Null naptanIds found')
         final_arrivals_pred_df_enriched  =  arrivals_pred_df_enriched
 
     # Send the most recent data to GCS Temporary file --> IWill copy into official file after extraction and enrichment is complete
