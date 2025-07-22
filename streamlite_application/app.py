@@ -5,6 +5,8 @@ from streamlit_autorefresh import st_autorefresh
 import pydeck as pdk
 from sklearn.preprocessing import MinMaxScaler
 
+# python3 -m streamlit run app.py
+
 # ---------- CONFIG ----------
 PROJECT_ID = "lon-trans-streaming-pipeline"
 TABLE_ID = "bus_density_streaming_pipeline.most_recent_predicted_arrivals"
@@ -46,6 +48,10 @@ def load_data():
 
 df = load_data()
 
+# ---------- PULL TIME----------
+latest_updated_time = df['pull_time'].max()
+st.info(f"Data last updated from TFL: {latest_updated_time.strftime('%Y-%m-%d %H:%M:%S')}")
+
 # ---------- DATA PROCESSING ----------
 df_filtered = df[df['timeToStation'] <= time_window * 60]
 df_grouped = (
@@ -76,7 +82,7 @@ st.pydeck_chart(
         initial_view_state=pdk.ViewState(
             latitude=51.5074,
             longitude=-0.1278,
-            zoom=12,
+            zoom=10,
             pitch=45,
         ),
         layers=[
