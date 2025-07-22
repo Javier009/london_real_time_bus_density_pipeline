@@ -1,0 +1,12 @@
+streamlit
+streamlit-autorefresh
+pandas
+google-cloud-bigquery
+pydeck
+scikit-learn
+Flask
+google-cloud-storage
+functions-framework
+ipykernel
+seaborn
+matplotlib
