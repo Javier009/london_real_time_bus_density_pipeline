@@ -9,6 +9,7 @@ from google.cloud import bigquery, storage
 from sklearn.metrics.pairwise import haversine_distances
 
 
+
 def main():
     # 1) --> GCP Configuration set up
 

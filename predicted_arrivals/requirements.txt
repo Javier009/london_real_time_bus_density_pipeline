@@ -3,5 +3,6 @@ numpy
 requests
 google-cloud-bigquery
 google-cloud-storage
+google-cloud-pubsub
 scikit-learn
 pytz
