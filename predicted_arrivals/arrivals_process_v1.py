@@ -272,6 +272,7 @@ def main():
             publish_completion_message(PROJECT_ID, PUBSUB_TOPIC_ID, message)
     else:
         print('Error with TFL GET request finishing job ...')
+        publish_completion_message(PROJECT_ID, PUBSUB_TOPIC_ID, message)
 
 if __name__ == '__main__':
     main()

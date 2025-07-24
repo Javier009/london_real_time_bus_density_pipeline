@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+from datetime import datetime
+import pytz
 from google.cloud import bigquery
 from streamlit_autorefresh import st_autorefresh
 import pydeck as pdk
@@ -75,10 +77,15 @@ df_grouped['density_norm'] = scaler.fit_transform(df_grouped[['buses_approaching
 df_grouped['color'] = df_grouped['density_norm'].apply(red_gray_blue)
 
 # ---------- MAP ----------
+
+london_tz = pytz.timezone("Europe/London")
+now_in_london = datetime.now(london_tz)
+current_hour = now_in_london.hour
+
 st.subheader("📍 Map of Bus Density by Cluster")
 st.pydeck_chart(
     pdk.Deck(
-        map_style="dark",
+        map_style= "dark" if current_hour > 17 or current_hour < 6 else "light",
         initial_view_state=pdk.ViewState(
             latitude=51.5074,
             longitude=-0.1278,
@@ -112,5 +119,5 @@ st.pydeck_chart(
         tooltip={"text": "{buses_approaching} buses approaching this area"}
     ),
     use_container_width=True,
-    height=700
+    height=1200
 )

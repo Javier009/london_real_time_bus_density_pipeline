@@ -1,0 +1,7 @@
+streamlit
+pandas
+pytz
+google-cloud-bigquery
+streamlit-autorefresh
+pydeck
+scikit-learn
