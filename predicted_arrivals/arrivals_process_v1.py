@@ -234,6 +234,9 @@ def main():
     API_KEY = os.environ.get('TFL_APP_KEY')
     arrivals_pred_df = bus_arrival_api_call(API_KEY)
 
+    # 3.5) Pub sub topic id
+    PUBSUB_TOPIC_ID = 'london-transport-data-topic'
+
     if len(arrivals_pred_df) > 0:
         # 4) --> Enrich data (Clusters + Nulls values handling)
         final_arrivals_pred_df_enriched = enrich_data(BQ_client=BQ_client,
@@ -263,7 +266,7 @@ def main():
             print('Error creating TEMPORARY FILE, finishing job...')
 
          # 7) --> Publish Pub/Sub message based on job completion status
-        PUBSUB_TOPIC_ID = 'london-transport-data-topic'
+                
         if job_final_stage[1] ==200:
             message = f"Cloud Run Job 'bus-density-image' completed successfully at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} PDT. Triggering Pipeline One more time"
             publish_completion_message(PROJECT_ID, PUBSUB_TOPIC_ID, message)
