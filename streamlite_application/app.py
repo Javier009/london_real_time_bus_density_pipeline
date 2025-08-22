@@ -15,7 +15,7 @@ TABLE_ID = "bus_density_streaming_pipeline.most_recent_predicted_arrivals"
 FULL_TABLE = f"{PROJECT_ID}.{TABLE_ID}"
 
 st.set_page_config(layout="wide", page_title="🚌 London Bus Density")
-st.title("🚌 London Predibus, How many buses are arriving in the next minutes?")
+st.title("🚌 🇬🇧 London Predibus, How many buses are arriving in the next minutes?")
 st.caption("Real-time forecast based on TfL live bus arrival data")
 
 # ---------- AUTO REFRESH ----------
